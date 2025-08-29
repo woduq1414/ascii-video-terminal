@@ -106,7 +106,7 @@ def generate_parrot_animation(frames, folder_name="overdrive", interval=0.1, str
                 frame_content = clear_sequence
                 frame_content += frame + "\n\n"
                 frame_content += f"{YELLOW}🎉 Animation '{folder_name}' #{i+1}/{len(selected_frames)} - Use Ctrl+C to stop! 🎉{RESET}\n"
-                # frame_content += f"{MAGENTA}Interval: {interval}s | Stride: {stride} | Total frames: {len(frames)}{RESET}\n"
+                frame_content += f"{MAGENTA}Interval: {interval}s | Stride: {stride} | Total frames: {len(frames)}{RESET}\n"
                 frame_content += f"{RESET}\n"
                 
                 # Send the complete frame as one chunk
@@ -157,7 +157,7 @@ def index():
         return create_animation_response(DEFAULT_FRAMES, "overdrive", interval, stride)
     else:
         # Redirect browsers to GitHub (like original parrot.live)
-        return redirect('https://github.com/hugomd/parrot.live', code=302)
+        return redirect('https://github.com/woduq1414/ascii-video-terminal', code=302)
 
 @app.route('/<folder_name>')
 def folder_animation(folder_name):
