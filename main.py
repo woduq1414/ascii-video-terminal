@@ -34,10 +34,27 @@ MOVE_HOME = '\033[H'            # Move cursor to home position
 SAVE_CURSOR = '\033[s'          # Save cursor position
 RESTORE_CURSOR = '\033[u'       # Restore cursor position
 
-def load_frame_files(folder_name="soda"):
-    """Load animation frames from files in the specified folder"""
-    frames_dir = f"saved_frames/{folder_name}"
+def load_frame_files(folder_name="soda", quality="medium"):
+    """Load animation frames from files in the specified folder and quality level"""
+    # Quality to height mapping
+    quality_heights = {
+        "low": "30",
+        "medium": "50", 
+        "high": "75",
+        "veryhigh": "100"
+    }
+    
+    # Get height based on quality, default to medium
+    height = quality_heights.get(quality, "50")
+    
+    # Try to load from quality-specific folder first
+    frames_dir = f"saved_frames/{folder_name}/{height}"
     frame_files = sorted(glob.glob(os.path.join(frames_dir, "frame_*.txt")))
+    
+    # If no files found in quality folder, try the main folder (backwards compatibility)
+    if not frame_files:
+        frames_dir = f"saved_frames/{folder_name}"
+        frame_files = sorted(glob.glob(os.path.join(frames_dir, "frame_*.txt")))
     
     frames = []
     colors = [YELLOW, CYAN, RED, GREEN, MAGENTA, BLUE]
@@ -57,7 +74,7 @@ def load_frame_files(folder_name="soda"):
     
     # Fallback to a simple frame if no files are found
     if not frames:
-        frames = [f"{GREEN}🐦 No frames found in '{folder_name}' directory! 🐦{RESET}"]
+        frames = [f"{GREEN}🐦 No frames found in '{folder_name}' directory (quality: {quality})! 🐦{RESET}"]
     
     return frames
 
@@ -71,14 +88,20 @@ def get_available_folders():
     for item in os.listdir(saved_frames_dir):
         item_path = os.path.join(saved_frames_dir, item)
         if os.path.isdir(item_path):
-            # Check if folder contains frame files
+            # Check if folder contains frame files (either in main folder or quality subfolders)
             frame_files = glob.glob(os.path.join(item_path, "frame_*.txt"))
-            if frame_files:
+            quality_frame_files = []
+            for quality_dir in ["30", "50", "75", "100"]:
+                quality_path = os.path.join(item_path, quality_dir)
+                if os.path.exists(quality_path):
+                    quality_frame_files.extend(glob.glob(os.path.join(quality_path, "frame_*.txt")))
+            
+            if frame_files or quality_frame_files:
                 folders.append(item)
     return folders
 
-# Load default parrot animation frames from files
-DEFAULT_FRAMES = load_frame_files()
+# Load default parrot animation frames from files (medium quality)
+DEFAULT_FRAMES = load_frame_files("soda", "medium")
 
 def is_curl_request(user_agent):
     """Check if the request is from curl"""
@@ -116,7 +139,7 @@ def detect_terminal_type():
     else:
         return 'unix_like'
 
-def generate_parrot_animation(frames, folder_name="soda", interval=0.05, stride=1):
+def generate_parrot_animation(frames, folder_name="soda", interval=0.05, stride=1, quality="medium"):
     """Generate the parrot animation stream with platform-specific anti-flickering optimization"""
     try:
         # Detect terminal type for optimal rendering strategy
@@ -145,8 +168,8 @@ def generate_parrot_animation(frames, folder_name="soda", interval=0.05, stride=
                 frame_content = MOVE_HOME
                 frame_content += frame + "\n\n"
                 frame_content += f"{YELLOW}🎉 Animation '{folder_name}' #{i+1}/{len(selected_frames)} - Use Ctrl+C to stop! 🎉{RESET}\n"
-                frame_content += f"{MAGENTA}Interval: {interval}s | Stride: {stride} | Total frames: {len(frames)}{RESET}\n"
-                frame_content += f"{GREEN}💡 Tip: ?interval=0.1 or ?stride=2{RESET}\n"
+                frame_content += f"{MAGENTA}Quality: {quality}(low, medium, high, veryhigh) | Interval: {interval}s | Stride: {stride} | Total frames: {len(frames)}{RESET}\n"
+                frame_content += f"{GREEN}💡 Tip: ?quality=high&interval=0.1&stride=2{RESET}\n"
                 frame_content += CLEAR_TO_END
                 # Send the complete frame as one atomic operation
                 yield frame_content
@@ -166,10 +189,10 @@ def generate_parrot_animation(frames, folder_name="soda", interval=0.05, stride=
         yield SHOW_CURSOR + CLEAR_SCREEN
         return
 
-def create_animation_response(frames, folder_name, interval, stride):
+def create_animation_response(frames, folder_name, interval, stride, quality="medium"):
     """Create animation response with proper headers"""
     response = Response(
-        generate_parrot_animation(frames, folder_name, interval, stride),
+        generate_parrot_animation(frames, folder_name, interval, stride, quality),
         mimetype='text/plain',
         headers={
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -183,7 +206,7 @@ def create_animation_response(frames, folder_name, interval, stride):
 
 @app.route('/')
 def index():
-    """Main route handler - default overdrive animation"""
+    """Main route handler - default soda animation"""
     user_agent = request.headers.get('User-Agent', '')
     
     # Check if request is from curl or similar command line tool
@@ -191,12 +214,20 @@ def index():
         # Get query parameters
         interval = float(request.args.get('interval', 0.05))
         stride = int(request.args.get('stride', 1))
+        quality = request.args.get('quality', 'medium').lower()
         
         # Validate parameters
         interval = max(0.01, min(interval, 10.0))  # Between 0.01 and 10 seconds
         stride = max(1, min(stride, 100))  # Between 1 and 100
         
-        return create_animation_response(DEFAULT_FRAMES, "soda", interval, stride)
+        # Validate quality parameter
+        valid_qualities = ['low', 'medium', 'high', 'veryhigh']
+        if quality not in valid_qualities:
+            quality = 'medium'
+        
+        # Load frames with specified quality
+        frames = load_frame_files("soda", quality)
+        return create_animation_response(frames, "soda", interval, stride, quality)
     else:
         # Redirect browsers to GitHub (like original parrot.live)
         return redirect('https://github.com/woduq1414/ascii-video-terminal', code=302)
@@ -211,20 +242,26 @@ def folder_animation(folder_name):
         # Get query parameters
         interval = float(request.args.get('interval', 0.05))
         stride = int(request.args.get('stride', 1))
+        quality = request.args.get('quality', 'medium').lower()
         
         # Validate parameters
         interval = max(0.01, min(interval, 10.0))  # Between 0.01 and 10 seconds
         stride = max(1, min(stride, 100))  # Between 1 and 100
         
+        # Validate quality parameter
+        valid_qualities = ['low', 'medium', 'high', 'veryhigh']
+        if quality not in valid_qualities:
+            quality = 'medium'
+        
         # Check if folder exists and has frames
         available_folders = get_available_folders()
         if folder_name not in available_folders:
             error_frames = [f"{RED}❌ Folder '{folder_name}' not found!{RESET}\n\n{YELLOW}Available folders: {', '.join(available_folders)}{RESET}"]
-            return create_animation_response(error_frames, folder_name, interval, stride)
+            return create_animation_response(error_frames, folder_name, interval, stride, quality)
         
         # Load frames for the specified folder
-        frames = load_frame_files(folder_name)
-        return create_animation_response(frames, folder_name, interval, stride)
+        frames = load_frame_files(folder_name, quality)
+        return create_animation_response(frames, folder_name, interval, stride, quality)
     else:
         # Redirect browsers to GitHub
         return redirect('https://github.com/hugomd/parrot.live', code=302)
@@ -246,7 +283,8 @@ if __name__ == "__main__":
     print(f"\n{YELLOW}Try these commands:{RESET}")
     print(f"{YELLOW}     curl localhost:1018{RESET}")
     print(f"{YELLOW}     curl localhost:1018/soda{RESET}")
-    print(f"{YELLOW}     curl \"localhost:1018/overdrive?interval=0.15&stride=2\"{RESET}")
+    print(f"{YELLOW}     curl \"localhost:1018/overdrive?quality=high&interval=0.15&stride=2\"{RESET}")
+    print(f"{YELLOW}     curl \"localhost:1018/chodan?quality=veryhigh\"{RESET}")
     print(f"{CYAN}🌐 Or visit http://localhost:1018 in your browser{RESET}")
     print(f"{MAGENTA}📁 Available animations: {', '.join(get_available_folders())}{RESET}")
     

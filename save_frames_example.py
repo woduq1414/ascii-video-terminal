@@ -12,30 +12,45 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from video_to_ascii import player
 
 def save_frames_example():
-    """예제: 비디오 파일을 프레임별로 저장"""
+    """예제: 모든 비디오 파일을 여러 해상도로 프레임 저장"""
     
-    # 샘플 비디오 파일 경로
-    video_file = "videos/soda.mp4"
-
-
-    file_name = video_file.split("/")[-1].split(".")[0]
-    output_folder = f"saved_frames/{file_name}"
+    # videos 폴더의 모든 mp4 파일 찾기
+    videos_folder = "videos"
+    video_files = []
     
-    if not os.path.exists(video_file):
-        print(f"비디오 파일을 찾을 수 없습니다: {video_file}")
+    if os.path.exists(videos_folder):
+        for file in os.listdir(videos_folder):
+            if file.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                video_files.append(os.path.join(videos_folder, file))
+    
+    if not video_files:
+        print(f"'{videos_folder}' 폴더에서 비디오 파일을 찾을 수 없습니다.")
         print("videos/ 폴더에 mp4 파일을 넣어주세요.")
         return
     
-    print(f"비디오 파일: {video_file}")
-    print(f"출력 폴더: {output_folder}")
-    print("프레임 저장을 시작합니다...")
+    print(f"발견된 비디오 파일: {len(video_files)}개")
+    for video_file in video_files:
+        print(f"  - {video_file}")
+    print()
     
-    # 프레임 저장 전략으로 실행
-    player.play(
-        filename=video_file,
-        strategy="save-frames", 
-        output=output_folder
-    )
+    # 각 비디오 파일에 대해 처리
+    for video_file in video_files:
+        file_name = os.path.basename(video_file).split(".")[0]
+        output_folder = f"saved_frames/{file_name}"
+        
+        print(f"=== {file_name} 처리 시작 ===")
+        print(f"비디오 파일: {video_file}")
+        print(f"출력 폴더: {output_folder}")
+        print("여러 해상도로 프레임 저장을 시작합니다...")
+        
+        # 프레임 저장 전략으로 실행 (모든 해상도: 30, 50, 75, 100)
+        player.play(
+            filename=video_file,
+            strategy="save-frames", 
+            output=output_folder
+        )
+        
+        print(f"=== {file_name} 처리 완료 ===\n")
 
 if __name__ == "__main__":
     save_frames_example()
