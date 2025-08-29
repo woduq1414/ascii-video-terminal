@@ -34,28 +34,28 @@ python main.py
 
 ```bash
 # 기본 애니메이션 (overdrive) 재생
-curl localhost:8081
+curl localhost:1018
 
 # 다른 애니메이션 재생 (soda)
-curl localhost:8081/soda
+curl localhost:1018/soda
 ```
 
 ### 재생 옵션 조절
 
 ```bash
 # 재생 속도 조절 (interval: 초 단위)
-curl "localhost:8081/overdrive?interval=0.2"
+curl "localhost:1018/overdrive?interval=0.2"
 
 # 프레임 스킵 (stride: n번째 프레임마다 재생)
-curl "localhost:8081/overdrive?stride=2"
+curl "localhost:1018/overdrive?stride=2"
 
 # 복합 옵션
-curl "localhost:8081/soda?interval=0.15&stride=3"
+curl "localhost:1018/soda?interval=0.15&stride=3"
 ```
 
 ### 브라우저 접속
 
-브라우저로 `http://localhost:8081`에 접속하면 관련 GitHub 페이지로 자동 리디렉션됩니다.
+브라우저로 `http://localhost:1018`에 접속하면 관련 GitHub 페이지로 자동 리디렉션됩니다.
 
 ## 비디오 추가하기
 
@@ -112,7 +112,7 @@ saved_frames/
 python main.py
 
 # 헬스 체크
-curl localhost:8081/health
+curl localhost:1018/health
 
 # 사용 가능한 애니메이션 확인
 # 서버 실행 시 콘솔에 표시됩니다

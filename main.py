@@ -194,15 +194,15 @@ def health():
 
 if __name__ == "__main__":
     print(f"{GREEN}🐦 Starting ASCII Terminal Parrot Server...{RESET}")
-    print(f"{YELLOW}Try: curl localhost:8081{RESET}")
-    print(f"{YELLOW}     curl localhost:8081/overdrive{RESET}")
-    print(f"{YELLOW}     curl \"localhost:8081/overdrive?interval=0.2&stride=2\"{RESET}")
-    print(f"{CYAN}Or visit http://localhost:8081 in your browser{RESET}")
+    print(f"{YELLOW}Try: curl localhost:1018{RESET}")
+    print(f"{YELLOW}     curl localhost:1018/overdrive{RESET}")
+    print(f"{YELLOW}     curl \"localhost:1018/overdrive?interval=0.2&stride=2\"{RESET}")
+    print(f"{CYAN}Or visit http://localhost:1018 in your browser{RESET}")
     print(f"{MAGENTA}Available folders: {', '.join(get_available_folders())}{RESET}")
     
     app.run(
         host='0.0.0.0',
-        port=8081,
+        port=1018,
         debug=False,
         threaded=True
     )
