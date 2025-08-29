@@ -34,7 +34,7 @@ MOVE_HOME = '\033[H'            # Move cursor to home position
 SAVE_CURSOR = '\033[s'          # Save cursor position
 RESTORE_CURSOR = '\033[u'       # Restore cursor position
 
-def load_frame_files(folder_name="overdrive"):
+def load_frame_files(folder_name="soda"):
     """Load animation frames from files in the specified folder"""
     frames_dir = f"saved_frames/{folder_name}"
     frame_files = sorted(glob.glob(os.path.join(frames_dir, "frame_*.txt")))
@@ -116,7 +116,7 @@ def detect_terminal_type():
     else:
         return 'unix_like'
 
-def generate_parrot_animation(frames, folder_name="overdrive", interval=0.05, stride=1):
+def generate_parrot_animation(frames, folder_name="soda", interval=0.05, stride=1):
     """Generate the parrot animation stream with platform-specific anti-flickering optimization"""
     try:
         # Detect terminal type for optimal rendering strategy
@@ -196,7 +196,7 @@ def index():
         interval = max(0.01, min(interval, 10.0))  # Between 0.01 and 10 seconds
         stride = max(1, min(stride, 100))  # Between 1 and 100
         
-        return create_animation_response(DEFAULT_FRAMES, "overdrive", interval, stride)
+        return create_animation_response(DEFAULT_FRAMES, "soda", interval, stride)
     else:
         # Redirect browsers to GitHub (like original parrot.live)
         return redirect('https://github.com/woduq1414/ascii-video-terminal', code=302)
