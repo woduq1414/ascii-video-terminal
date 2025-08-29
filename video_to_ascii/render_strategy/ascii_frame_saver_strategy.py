@@ -53,7 +53,7 @@ class AsciiFrameSaverStrategy(color_strategy.AsciiColorStrategy):
             if not ret:
                 break
 
-            new_height = 50
+            new_height = 75
             # new_height = int(frame.shape[0] * (new_width / frame.shape[1]))
             # print(frame.shape)
 
