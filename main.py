@@ -84,7 +84,7 @@ def is_curl_request(user_agent):
     return bool(re.search(r'curl|wget|httpie|perl|python|ruby|php|go-http|java|c\+\+|libwww', 
                          user_agent.lower()))
 
-def generate_parrot_animation(frames, folder_name="overdrive", interval=0.1, stride=1):
+def generate_parrot_animation(frames, folder_name="overdrive", interval=0.05, stride=1):
     """Generate the parrot animation stream"""
     try:
         # Send initial setup - hide cursor and clear screen
@@ -147,7 +147,7 @@ def index():
     # Check if request is from curl or similar command line tool
     if is_curl_request(user_agent):
         # Get query parameters
-        interval = float(request.args.get('interval', 0.1))
+        interval = float(request.args.get('interval', 0.05))
         stride = int(request.args.get('stride', 1))
         
         # Validate parameters
@@ -167,7 +167,7 @@ def folder_animation(folder_name):
     # Check if request is from curl or similar command line tool
     if is_curl_request(user_agent):
         # Get query parameters
-        interval = float(request.args.get('interval', 0.1))
+        interval = float(request.args.get('interval', 0.05))
         stride = int(request.args.get('stride', 1))
         
         # Validate parameters
