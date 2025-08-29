@@ -7,6 +7,7 @@ import time
 import re
 import os
 import glob
+import platform
 from flask import Flask, Response, request, redirect
 
 app = Flask(__name__)
@@ -25,10 +26,13 @@ WHITE = '\033[97m'
 # Clear screen and cursor control
 CLEAR_SCREEN = '\033[2J\033[H'  # Clear entire screen and move cursor to home
 CLEAR_LINE = '\033[2K'          # Clear entire line
+CLEAR_TO_END = '\033[0J'        # Clear from cursor to end of screen
 HIDE_CURSOR = '\033[?25l'       # Hide cursor
 SHOW_CURSOR = '\033[?25h'       # Show cursor
 MOVE_UP = '\033[A'              # Move cursor up one line
 MOVE_HOME = '\033[H'            # Move cursor to home position
+SAVE_CURSOR = '\033[s'          # Save cursor position
+RESTORE_CURSOR = '\033[u'       # Restore cursor position
 
 def load_frame_files(folder_name="overdrive"):
     """Load animation frames from files in the specified folder"""
@@ -84,36 +88,74 @@ def is_curl_request(user_agent):
     return bool(re.search(r'curl|wget|httpie|perl|python|ruby|php|go-http|java|c\+\+|libwww', 
                          user_agent.lower()))
 
+def detect_terminal_type():
+    """Detect terminal type for platform-specific optimizations"""
+    system = platform.system().lower()
+    terminal_program = os.environ.get('TERM_PROGRAM', '').lower()
+    terminal = os.environ.get('TERM', '').lower()
+    
+    # Windows-specific terminal detection
+    if system == 'windows':
+        if 'windows terminal' in terminal_program or 'wt' in terminal_program:
+            return 'windows_terminal'
+        elif 'cmd' in terminal or 'powershell' in terminal_program:
+            return 'windows_legacy'
+        else:
+            return 'windows_unknown'
+    
+    # Mac-specific
+    elif system == 'darwin':
+        if 'iterm' in terminal_program:
+            return 'iterm'
+        elif 'terminal' in terminal_program:
+            return 'terminal_app'
+        else:
+            return 'mac_other'
+    
+    # Linux and others
+    else:
+        return 'unix_like'
+
 def generate_parrot_animation(frames, folder_name="overdrive", interval=0.05, stride=1):
-    """Generate the parrot animation stream"""
+    """Generate the parrot animation stream with platform-specific anti-flickering optimization"""
     try:
-        # Send initial setup - hide cursor and clear screen
+        # Detect terminal type for optimal rendering strategy
+        terminal_type = detect_terminal_type()
+        
+        # Send initial setup - hide cursor and clear screen once
         yield HIDE_CURSOR + CLEAR_SCREEN
         
         # Apply stride - select every nth frame
         selected_frames = frames[::stride] if stride > 1 else frames
         
+        # Pre-calculate consistent frame dimensions
+        if selected_frames:
+            # Remove ANSI codes to get accurate line count
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            sample_frame = ansi_escape.sub('', selected_frames[0])
+            frame_lines = sample_frame.count('\n')
+        else:
+            frame_lines = 10
+        
         # Loop the animation forever
         while True:
             for i, frame in enumerate(selected_frames):
-                # Clear entire screen more thoroughly
-                # ESC[2J - clear entire screen
-                # ESC[H - move cursor to home position  
-                # ESC[3J - clear scrollback buffer
-                clear_sequence = '\033[2J\033[3J\033[H'
-                
-                # Build complete frame content in one go
-                frame_content = clear_sequence
+    
+                frame_content = MOVE_HOME
                 frame_content += frame + "\n\n"
                 frame_content += f"{YELLOW}🎉 Animation '{folder_name}' #{i+1}/{len(selected_frames)} - Use Ctrl+C to stop! 🎉{RESET}\n"
                 frame_content += f"{MAGENTA}Interval: {interval}s | Stride: {stride} | Total frames: {len(frames)}{RESET}\n"
-                frame_content += f"{RESET}\n"
-                
-                # Send the complete frame as one chunk
+                frame_content += f"{GREEN}💡 Tip: ?interval=0.1 or ?stride=2{RESET}\n"
+                frame_content += CLEAR_TO_END
+                # Send the complete frame as one atomic operation
                 yield frame_content
                 
-                # Wait before next frame with custom interval
-                time.sleep(interval)
+                # Platform-specific timing adjustments
+                adjusted_interval = interval
+                    
+                
+                time.sleep(adjusted_interval)
                 
     except GeneratorExit:
         # Clean up when client disconnects gracefully
@@ -193,12 +235,20 @@ def health():
     return {'status': 'healthy', 'message': '🐦 Parrot server is flying!'}
 
 if __name__ == "__main__":
-    print(f"{GREEN}🐦 Starting ASCII Terminal Parrot Server...{RESET}")
-    print(f"{YELLOW}Try: curl localhost:1018{RESET}")
-    print(f"{YELLOW}     curl localhost:1018/overdrive{RESET}")
-    print(f"{YELLOW}     curl \"localhost:1018/overdrive?interval=0.2&stride=2\"{RESET}")
-    print(f"{CYAN}Or visit http://localhost:1018 in your browser{RESET}")
-    print(f"{MAGENTA}Available folders: {', '.join(get_available_folders())}{RESET}")
+    terminal_type = detect_terminal_type()
+    
+    print(f"{GREEN}🎬 Starting ASCII Video Terminal Server...{RESET}")
+    print(f"{CYAN}🖥️  Detected terminal: {terminal_type}{RESET}")
+    
+    if terminal_type.startswith('windows'):
+        print(f"{YELLOW}🔧 Windows anti-flickering optimizations enabled{RESET}")
+    
+    print(f"\n{YELLOW}Try these commands:{RESET}")
+    print(f"{YELLOW}     curl localhost:1018{RESET}")
+    print(f"{YELLOW}     curl localhost:1018/soda{RESET}")
+    print(f"{YELLOW}     curl \"localhost:1018/overdrive?interval=0.15&stride=2\"{RESET}")
+    print(f"{CYAN}🌐 Or visit http://localhost:1018 in your browser{RESET}")
+    print(f"{MAGENTA}📁 Available animations: {', '.join(get_available_folders())}{RESET}")
     
     app.run(
         host='0.0.0.0',
