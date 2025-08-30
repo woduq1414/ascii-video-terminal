@@ -127,7 +127,7 @@ curl localhost:1018/health
 
 ## 참고 자료
 
-비디오를 ASCII 문자로 변환하는 코드는 [@joelibaceta/video-to-ascii](https://github.com/joelibaceta/video-to-ascii)를 참고하여 구현했습니다.
+비디오를 ASCII 문자로 변환하는 코드는 [@joelibaceta/video-to-ascii](https://github.com/joelibaceta/video-to-ascii)를 사용했습니다.
 
 ## 라이선스
 

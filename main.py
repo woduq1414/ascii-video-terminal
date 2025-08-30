@@ -264,7 +264,7 @@ def folder_animation(folder_name):
         return create_animation_response(frames, folder_name, interval, stride, quality)
     else:
         # Redirect browsers to GitHub
-        return redirect('https://github.com/hugomd/parrot.live', code=302)
+        return redirect('https://github.com/woduq1414/ascii-video-terminal', code=302)
 
 @app.route('/health')
 def health():
